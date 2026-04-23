@@ -3,21 +3,30 @@ let selectedSlot = null;
 // ---- Inicialización ----
 
 async function init() {
-  document.getElementById('header-title').textContent  = CONFIG.negocio;
-  document.getElementById('header-slogan').textContent = CONFIG.slogan;
-  document.title = CONFIG.negocio;
-
   try {
     if (CONFIG.appsScriptUrl && CONFIG.appsScriptUrl !== 'PEGAR_URL_AQUI') {
       const res  = await fetch(`${CONFIG.appsScriptUrl}?action=config`);
       const data = await res.json();
       if (data.servicios && data.servicios.length) CONFIG.servicios = data.servicios;
-      if (data.colores) aplicarColores(data.colores);
+      if (data.colores  && Object.keys(data.colores).length)  aplicarColores(data.colores);
+      if (data.horarios && Object.keys(data.horarios).length) CONFIG.horarios = data.horarios;
+      if (data.general) {
+        const g = data.general;
+        if (g.negocio)           CONFIG.negocio              = g.negocio;
+        if (g.slogan)            CONFIG.slogan               = g.slogan;
+        if (g.telefono)          CONFIG.telefono             = g.telefono;
+        if (g.mensaje)           CONFIG.mensajeConfirmacion  = g.mensaje;
+        if (g.diasAnticipacion)  CONFIG.diasAnticipacion     = parseInt(g.diasAnticipacion);
+        if (g.intervalo)         CONFIG.intervalo            = parseInt(g.intervalo);
+      }
     }
   } catch (e) {
     console.warn('No se pudo cargar configuración dinámica:', e);
   }
 
+  document.getElementById('header-title').textContent  = CONFIG.negocio;
+  document.getElementById('header-slogan').textContent = CONFIG.slogan;
+  document.title = CONFIG.negocio;
   populateServicios();
   setDateLimits();
 }

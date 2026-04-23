@@ -12,15 +12,28 @@ const HEADERS = [
 ];
 
 const CONFIG_DEFAULTS = [
-  ["servicio", "Consulta general",        "30",      "Duración en minutos"],
-  ["servicio", "Consulta especializada",  "60",      "Duración en minutos"],
-  ["servicio", "Seguimiento",             "20",      "Duración en minutos"],
-  ["servicio", "Tratamiento completo",    "90",      "Duración en minutos"],
-  ["color",    "primary",                 "#4f6ef7", "Color principal (botones, encabezado)"],
-  ["color",    "primary-dark",            "#3a57e8", "Color principal al pasar el mouse"],
-  ["color",    "success",                 "#22c55e", "Color de éxito (confirmación)"],
-  ["color",    "danger",                  "#ef4444", "Color de error y cancelar"],
-  ["color",    "bg",                      "#f1f5f9", "Color de fondo de la página"],
+  ["servicio", "Consulta general",        "30",                          "Duración en minutos"],
+  ["servicio", "Consulta especializada",  "60",                          "Duración en minutos"],
+  ["servicio", "Seguimiento",             "20",                          "Duración en minutos"],
+  ["servicio", "Tratamiento completo",    "90",                          "Duración en minutos"],
+  ["color",    "primary",                 "#4f6ef7",                     "Color principal (botones, encabezado)"],
+  ["color",    "primary-dark",            "#3a57e8",                     "Color principal al pasar el mouse"],
+  ["color",    "success",                 "#22c55e",                     "Color de éxito (confirmación)"],
+  ["color",    "danger",                  "#ef4444",                     "Color de error y cancelar"],
+  ["color",    "bg",                      "#f1f5f9",                     "Color de fondo de la página"],
+  ["general",  "negocio",                 "Mi Negocio",                  "Nombre del negocio (aparece en el encabezado)"],
+  ["general",  "slogan",                  "Reservá tu turno online",     "Texto debajo del nombre"],
+  ["general",  "telefono",                "11-1234-5678",                "Teléfono de contacto"],
+  ["general",  "mensaje",                 "¡Tu turno fue reservado con éxito! Te esperamos.", "Mensaje al confirmar una reserva"],
+  ["general",  "diasAnticipacion",        "30",                          "Días máximos de anticipación para reservar"],
+  ["general",  "intervalo",               "30",                          "Minutos entre turnos disponibles"],
+  ["horario",  "lunes",                   "09:00-18:00",                 "Vacío = no atiende ese día"],
+  ["horario",  "martes",                  "09:00-18:00",                 "Vacío = no atiende ese día"],
+  ["horario",  "miercoles",               "09:00-18:00",                 "Vacío = no atiende ese día"],
+  ["horario",  "jueves",                  "09:00-18:00",                 "Vacío = no atiende ese día"],
+  ["horario",  "viernes",                 "09:00-17:00",                 "Vacío = no atiende ese día"],
+  ["horario",  "sabado",                  "09:00-13:00",                 "Vacío = no atiende ese día"],
+  ["horario",  "domingo",                 "",                            "Vacío = no atiende ese día"],
 ];
 
 function doGet(e) {
@@ -154,19 +167,37 @@ function getConfig() {
   const data  = sheet.getDataRange().getValues();
   const servicios = [];
   const colores   = {};
+  const general   = {};
+  const horarios  = {};
+
+  const diasMap = {
+    domingo: 0, lunes: 1, martes: 2, miercoles: 3,
+    jueves: 4, viernes: 5, sabado: 6
+  };
 
   for (let i = 1; i < data.length; i++) {
-    const tipo   = String(data[i][0]).trim();
+    const tipo   = String(data[i][0]).trim().toLowerCase();
     const nombre = String(data[i][1]).trim();
     const valor  = String(data[i][2]).trim();
-    if (!tipo || !nombre || !valor) continue;
-    if (tipo === "servicio") {
+    if (!tipo || !nombre) continue;
+
+    if (tipo === "servicio" && valor) {
       servicios.push({ nombre, duracion: parseInt(valor) || 30 });
-    } else if (tipo === "color") {
+    } else if (tipo === "color" && valor) {
       colores[nombre] = valor;
+    } else if (tipo === "general" && valor) {
+      general[nombre] = valor;
+    } else if (tipo === "horario") {
+      const dow = diasMap[nombre.toLowerCase()];
+      if (dow === undefined) continue;
+      if (!valor) continue; // día sin atención
+      const partes = valor.split("-");
+      if (partes.length === 2) {
+        horarios[dow] = { inicio: partes[0].trim(), fin: partes[1].trim() };
+      }
     }
   }
-  return { servicios, colores };
+  return { servicios, colores, general, horarios };
 }
 
 function getOrCreateConfigSheet() {
@@ -185,6 +216,22 @@ function getOrCreateConfigSheet() {
     sheet.autoResizeColumns(1, 4);
   }
   return sheet;
+}
+
+// Ejecutar esta función una vez desde el editor para agregar las filas nuevas
+function setupConfig() {
+  const sheet = getOrCreateConfigSheet();
+  const data  = sheet.getDataRange().getValues();
+  const existentes = new Set(
+    data.slice(1).map(r => `${String(r[0]).trim()}|${String(r[1]).trim()}`)
+  );
+  CONFIG_DEFAULTS.forEach(row => {
+    const key = `${row[0]}|${row[1]}`;
+    if (!existentes.has(key)) {
+      sheet.appendRow(row);
+    }
+  });
+  sheet.autoResizeColumns(1, 4);
 }
 
 // ---- Leer turnos ocupados ----
