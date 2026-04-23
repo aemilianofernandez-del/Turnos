@@ -10,9 +10,8 @@ const CONFIG = {
   telefono: "11-1234-5678",
   mensajeConfirmacion: "¡Tu turno fue reservado con éxito! Te esperamos.",
 
-  // --- URL del Google Apps Script ---
-  // Completá esto después de publicar el script (ver instrucciones en apps-script.js)
-  appsScriptUrl: "https://script.google.com/macros/s/AKfycbwkWIcsNgu22XQa5N6RUCvds2NVJD3R-03QsI7CD8CDhSMJGGZwFUCf6U25_OuJ5bRM_w/exec",
+  // URL del Apps Script — se sobreescribe automáticamente desde empresas.json
+  appsScriptUrl: "",
 
   // --- Servicios ---
   // { nombre, duracion en minutos }

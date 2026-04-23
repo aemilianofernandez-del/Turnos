@@ -4,6 +4,18 @@ let adminPassword = CONFIG.adminPassword || 'admin1234';
 // ── Init ──
 
 async function initAdmin() {
+  const empresa = await cargarEmpresa();
+
+  if (!empresa) {
+    document.getElementById('login-screen').innerHTML = `
+      <div class="login-card">
+        <div class="login-logo">⚠️</div>
+        <h2>Empresa no encontrada</h2>
+        <p class="login-sub">Verificá que la URL incluya el parámetro <code>?empresa=nombre</code></p>
+      </div>`;
+    return;
+  }
+
   try {
     if (CONFIG.appsScriptUrl && CONFIG.appsScriptUrl !== 'PEGAR_URL_AQUI') {
       const res  = await fetch(`${CONFIG.appsScriptUrl}?action=config`);
@@ -11,9 +23,9 @@ async function initAdmin() {
       if (data.general && data.general.adminPassword) adminPassword = data.general.adminPassword;
       if (data.colores) aplicarColores(data.colores);
     }
-  } catch (e) { /* usa contraseña de config.js como fallback */ }
+  } catch (e) { /* usa contraseña fallback */ }
 
-  if (sessionStorage.getItem('admin_ok') === '1') {
+  if (sessionStorage.getItem(`admin_ok_${empresa.slug}`) === '1') {
     mostrarDashboard();
   }
 }
@@ -21,9 +33,10 @@ async function initAdmin() {
 // ── Login ──
 
 function login() {
-  const val = document.getElementById('pwd').value;
+  const val  = document.getElementById('pwd').value;
+  const slug = new URLSearchParams(window.location.search).get('empresa') || '';
   if (val === adminPassword) {
-    sessionStorage.setItem('admin_ok', '1');
+    sessionStorage.setItem(`admin_ok_${slug}`, '1');
     mostrarDashboard();
   } else {
     document.getElementById('login-error').style.display = '';
@@ -33,7 +46,8 @@ function login() {
 }
 
 function logout() {
-  sessionStorage.removeItem('admin_ok');
+  const slug = new URLSearchParams(window.location.search).get('empresa') || '';
+  sessionStorage.removeItem(`admin_ok_${slug}`);
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('login-screen').style.display = '';
   document.getElementById('pwd').value = '';

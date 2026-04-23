@@ -3,6 +3,18 @@ let selectedSlot = null;
 // ---- Inicialización ----
 
 async function init() {
+  const empresa = await cargarEmpresa();
+
+  if (!empresa) {
+    document.getElementById('loading-screen').innerHTML = `
+      <div class="loading-box">
+        <div style="font-size:2.5rem;margin-bottom:14px">⚠️</div>
+        <p style="font-size:1rem;font-weight:600;margin-bottom:6px">Empresa no encontrada</p>
+        <p style="font-size:0.85rem">Verificá que la URL incluya el parámetro <code>?empresa=nombre</code></p>
+      </div>`;
+    return;
+  }
+
   try {
     if (CONFIG.appsScriptUrl && CONFIG.appsScriptUrl !== 'PEGAR_URL_AQUI') {
       const res  = await fetch(`${CONFIG.appsScriptUrl}?action=config`);
