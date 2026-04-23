@@ -29,6 +29,9 @@ async function init() {
   document.title = CONFIG.negocio;
   populateServicios();
   setDateLimits();
+
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('app').style.display = '';
 }
 
 function aplicarColores(colores) {
